@@ -1,0 +1,61 @@
+proc browseFiles(string $iSF)
+{
+    string $file[] = `fileDialog2 -fm 1 -fileFilter "All Files (*.txt)"`;
+    $fileId = `fopen $file[0] "r"`;
+    string $result;
+	string $nextLine = `fgetline $fileId`;
+    while ( size( $nextLine ) > 0 )
+    {
+	    $result = $result + $nextLine;
+	    $nextLine = `fgetline $fileId`;
+    }
+    scrollField -edit -cl $iSF;
+	scrollField -edit -text $result $iSF;
+}
+
+proc updateStepSizeSlider(string $iSSSlider)
+{
+    print($iSSSlider);
+}
+
+proc updateIterationsSlider(string $iISlider)
+{
+    print($iISlider);
+}
+
+proc updateAngleSlider(string $iASlider)
+{
+    print($iASlider);
+}
+
+proc on_create(string $iSF)
+{
+    print($iSF);
+}
+
+if(`window -ex "LWindow"`)
+{
+    deleteUI "LWindow";
+}
+window -title "Call LSystem Command" -w 500 -h 300 "LWindow";
+columnLayout -adj true -rs 10;
+    rowLayout -numberOfColumns 2 -columnWidth2 200 300 -columnAttach 1 "left" 0 -columnAttach 2 "right" 0;
+        text - label "Browse for grammar files"; 
+        button -label "Browse Files" -command "browseFiles($SF)";
+    setParent ..;
+    
+    string $SF = `scrollField -width 500 -height 100 -text "F\\nF->F[+F]F[-F]F"`;
+    
+    frameLayout -label "LSystem Parameters";
+        columnLayout -adjustableColumn true;
+        string $iterationsSlider = `intSliderGrp -label "Iterations" -field true -cc "updateIterationsSlider($iterationsSlider);"`;
+        string $stepSizeSlider = `floatSliderGrp -label "Default Step Size" -field true -cc "updateStepSizeSlider($stepSizeSlider);"`;
+        string $angleSlider = `floatSliderGrp -label "Default Angle" -field true -cc "updateAngleSlider($angleSlider);"`;
+    setParent ..;
+    
+    rowLayout -numberOfColumns 2 -columnWidth2 100 400 -columnAttach 1 "left" 10 -columnAttach 2 "right" 10; 
+        button -label "Create" -command "on_create($SF)";
+        button -label "Cancel" -command "deleteUI LWindow;"; 
+    setParent ..;
+setParent ..;
+showWindow;

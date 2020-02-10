@@ -1,0 +1,112 @@
+proc browseFiles()
+{
+    string $file[] = `fileDialog2 -fm 1 -fileFilter "All Files (*.txt)"`;
+    $fileId = `fopen $file[0] "r"`;
+    string $result;
+	string $nextLine = `fgetline $fileId`;
+    while ( size( $nextLine ) > 0 )
+    {
+	    $result = $result + $nextLine;
+	    $nextLine = `fgetline $fileId`;
+    }
+    scrollField -edit -cl SF;
+	scrollField -edit -text $result SF;
+}
+
+proc on_create_static()
+{
+    string $grammar = `scrollField -q -text SF`;
+    int $iteration = `intSliderGrp -q -v iterationsSlider`;
+    float $stepsize = `floatSliderGrp -q -v stepSizeSlider`;
+    float $angle = `floatSliderGrp -q -v angleSlider`;
+    LSystemCmd -g $grammar -i $iteration -sz $stepsize -a $angle;
+}
+
+proc on_create_dynamic()
+{
+    string $grammar = `scrollField -q -text SF`;
+    float $stepsize = `floatSliderGrp -q -v stepSizeSlider`;
+    float $angle = `floatSliderGrp -q -v angleSlider`;
+    
+
+    if (`objExists LSystem1`) delete LSystem1;
+    if (`objExists LSystemShape1`) delete LSystemShape1; 
+    if (`objExists LSystemNode1`) delete LSystemNode1;
+
+    createNode transform -n LSystem1;
+    createNode mesh -n LSystemShape1 -p LSystem1;
+    sets -add initialShadingGroup LSystemShape1;
+    createNode LSystemNode -n LSystemNode1;
+    connectAttr time1.outTime LSystemNode1.time;
+    connectAttr LSystemNode1.outputMesh LSystemShape1.inMesh;
+
+    setAttr LSystemNode1.angle $angle;
+    setAttr LSystemNode1.step $stepsize;
+    setAttr LSystemNode1.grammar -type "string" $grammar;
+}
+
+proc createStaticLSystemWindow()
+{
+    if(`window -ex "StaticLWindow"`)
+    {
+        deleteUI "StaticLWindow";
+    }
+    window -title "Call Static LSystem Command" -w 500 -h 300 "StaticLWindow";
+    columnLayout -adj true -rs 10;
+        rowLayout -numberOfColumns 2 -columnWidth2 200 300 -columnAttach 1 "left" 0 -columnAttach 2 "right" 0;
+            text - label "Browse for grammar files"; 
+            button -label "Browse Files" -command "browseFiles()";
+        setParent ..;
+    
+        scrollField -width 500 -height 100 -text "F\\nF->F[+F]F[-F]F" SF;
+    
+        frameLayout -label "LSystem Parameters";
+            columnLayout -adjustableColumn true;
+            intSliderGrp -label "Iterations" -field true iterationsSlider;
+            floatSliderGrp -label "Default Step Size" -field true stepSizeSlider;
+            floatSliderGrp -label "Default Angle" -field true angleSlider;
+        setParent ..;
+    
+        rowLayout -numberOfColumns 2 -columnWidth2 100 400 -columnAttach 1 "left" 10 -columnAttach 2 "right" 10; 
+            button -label "Create" -command "on_create_static()";
+            button -label "Cancel" -command "deleteUI StaticLWindow;"; 
+        setParent ..;
+    setParent ..;
+    showWindow;
+}
+
+proc createDynamicLSystemWindow()
+{
+    if(`window -ex "DynamicLWindow"`)
+    {
+        deleteUI "DynamicLWindow";
+    }
+    window -title "Call Dynamic LSystem Command" -w 500 -h 300 "DynamicLWindow";
+    columnLayout -adj true -rs 10;
+        rowLayout -numberOfColumns 2 -columnWidth2 200 300 -columnAttach 1 "left" 0 -columnAttach 2 "right" 0;
+            text - label "Browse for grammar files"; 
+            button -label "Browse Files" -command "browseFiles()";
+        setParent ..;
+    
+        scrollField -width 500 -height 100 -text "F\\nF->F[+F]F[-F]F" SF;
+    
+        frameLayout -label "LSystem Parameters";
+            columnLayout -adjustableColumn true;
+            floatSliderGrp -label "Default Step Size" -field true stepSizeSlider;
+            floatSliderGrp -label "Default Angle" -field true angleSlider;
+        setParent ..;
+    
+        rowLayout -numberOfColumns 2 -columnWidth2 100 400 -columnAttach 1 "left" 10 -columnAttach 2 "right" 10; 
+            button -label "Create" -command "on_create_dynamic()";
+            button -label "Cancel" -command "deleteUI DynamicLWindow;"; 
+        setParent ..;
+    setParent ..;
+    showWindow;
+}
+
+
+global string $gMainWindow;
+setParent $gMainWindow;
+menu -label "LSystemCmd" -tearOff true;
+    menuItem -label "Static LSystem Command" -command "createStaticLSystemWindow()";
+    menuItem -label "Dynamic LSystem Command" -command "createDynamicLSystemWindow()";
